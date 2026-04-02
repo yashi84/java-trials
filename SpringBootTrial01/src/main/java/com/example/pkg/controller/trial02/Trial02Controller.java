@@ -24,5 +24,15 @@ public class Trial02Controller {
         return list;
     }
 
+    @GetMapping("/trial02u")
+    public MyData indexu(@RequestParam(required = true, defaultValue = "3") int size) {
+        return new MyData(9);
+    }
+
+    @GetMapping("/trial02n")
+    public MyData indexn(@RequestParam(required = true, defaultValue = "3") int size) {
+        return null;
+    }
+
 }
 

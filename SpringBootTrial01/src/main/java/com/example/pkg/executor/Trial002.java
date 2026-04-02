@@ -1,11 +1,17 @@
 package com.example.pkg.executor;
 
+import com.example.pkg.controller.trial02.MyData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 public class Trial002 {
     public static void main(String[] args) throws JsonProcessingException {
@@ -16,71 +22,29 @@ public class Trial002 {
 
     private void execute() throws JsonProcessingException {
         // execute logic here.
+        var ret1 = requestImpl(HttpMethod.GET, MyData.class, URL, null);
+        System.out.println(ret1);
 
-        // --- 配列 ---
-        A[] array = { new A(1, "Alice"), new A(2, "Bob") };
-        String arrayJson = JsonUtil.toJson(array);
-        System.out.println("配列→JSON: " + arrayJson);
-        A[] arrayRestored = JsonUtil.fromJsonToArray(arrayJson, A[].class);
-        System.out.println("復元配列: " + Arrays.toString(arrayRestored));
+        var ret2 = requestImpl(HttpMethod.GET, MyData.class, URLU, null);
+        System.out.println(ret2);
 
-        // --- List ---
-        List<A> list = Arrays.asList(new A(3, "Carol"), new A(4, "Dave"));
-        String listJson = JsonUtil.toJson(list);
-        System.out.println("List→JSON: " + listJson);
-        List<A> listRestored = JsonUtil.fromJsonToList(listJson);
-//        List<A> listRestored = JsonUtil.fromJsonToList(listJson, A.class);
-        System.out.println("復元List: " + listRestored);
+        var ret3 = requestImpl(HttpMethod.GET, MyData.class, URLN, null);
+        System.out.println(ret3);
+
     }
 
-    static class A {
-        private int id;
-        private String name;
+    private static final String URL = "http://localhost:8080/trial02";
+    private static final String URLU = "http://localhost:8080/trial02u";
+    private static final String URLN = "http://localhost:8080/trial02n";
 
-        public A() {}
-        public A(int id, String name) {
-            this.id = id; this.name = name;
-        }
-
-        public int getId() { return id; }
-        public void setId(int id) { this.id = id; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-
-        @Override
-        public String toString() {
-            return "A!{id=" + id + ", name='" + name + "'}";
-        }
-    }
-
-    static class JsonUtil {
-
-        private static final ObjectMapper mapper = new ObjectMapper();
-
-        /**
-         * コレクションや配列を JSON 文字列に変換する
-         */
-        public static <T> String toJson(Object collection) throws JsonProcessingException {
-            return mapper.writeValueAsString(collection);
-        }
-
-        /**
-         * JSON を配列に変換
-         */
-        public static <T> T[] fromJsonToArray(String json, Class<T[]> clazz) throws JsonProcessingException {
-            return mapper.readValue(json, clazz);
-        }
-
-        /**
-         * JSON を List に変換
-         */
-        public static <T> List<T> fromJsonToList(String json, Class<T> clazz) throws JsonProcessingException {
-            // List<T> のジェネリクス型情報は TypeReference で渡す必要がある
-            return mapper.readValue(json, new TypeReference<List<T>>() {});
-        }
-        public static <T> List<T> fromJsonToList(String json) throws JsonProcessingException {
-            // List<T> のジェネリクス型情報は TypeReference で渡す必要がある
-            return mapper.readValue(json, new TypeReference<List<T>>() {});
-        }
+    private <REQ, RES> List<RES> requestImpl(HttpMethod requestMethod, Class<RES> responseClass,
+                                       String url, REQ requestBody) {
+        WebClient webClient = WebClient.builder().build();
+        var spec = webClient.method(requestMethod).uri(url)
+                .retrieve()
+                .bodyToFlux(responseClass)
+                .collectList()
+                .block();
+        return spec;
     }
 }
